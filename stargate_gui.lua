@@ -63,15 +63,16 @@ minetest.register_on_joinplayer(function(player)
 		stargate.save_data("registered_players")
 		stargate.save_data(player_name)
 	end
-	stargate_network["players"][player_name]={}
-	stargate_network["players"][player_name]["formspec"]=""
-	stargate_network["players"][player_name]["current_page"]=stargate.default_page
-	stargate_network["players"][player_name]["own_gates"]={}
-	stargate_network["players"][player_name]["own_gates_count"]=0
-	stargate_network["players"][player_name]["public_gates"]={}
-	stargate_network["players"][player_name]["public_gates_count"]=0
-	stargate_network["players"][player_name]["current_index"]=0
-	stargate_network["players"][player_name]["temp_gate"]={}
+	stargate_network["players"][player_name]={
+		formspec = "",
+		current_page = stargate.default_page,
+		own_gates ={},
+		own_gates_count =0,
+		public_gates ={},
+		public_gates_count =0,
+		current_index =0,
+		temp_gate ={},
+	}
 end)
 
 stargate.registerGate = function(player_name,pos,dir)
@@ -103,14 +104,13 @@ stargate.unregisterGate = function(player_name,pos)
 end
 
 stargate.findGate = function(pos)
-	for __,tab in ipairs(stargate_network["registered_players"]) do
-		local player_name=tab["player_name"]
+	for _,tab in pairs(stargate_network.registered_players) do
+		local player_name=tab.player_name
 		if type(stargate_network[player_name])=="table" then
-			for __,gates in ipairs(stargate_network[player_name]) do
-				if gates then 
-					if gates["pos"].x==pos.x and gates["pos"].y==pos.y and gates["pos"].z==pos.z then
-						return gates
-					end
+			for _,gates in pairs(stargate_network[player_name]) do
+				if gates
+				and vector.equals(gates.pos, pos) then
+					return gates
 				end
 			end
 		end
@@ -121,7 +121,7 @@ end
 --show formspec to player
 stargate.gateFormspecHandler = function(pos, node, clicker, itemstack)
 	local player_name = clicker:get_player_name()
-	local meta = minetest.env:get_meta(pos)
+	local meta = minetest.get_meta(pos)
 	local owner=meta:get_string("owner")
 	if player_name~=owner then return end
 	local current_gate=nil
@@ -145,7 +145,7 @@ stargate.gateFormspecHandler = function(pos, node, clicker, itemstack)
 		local temp=tab["player_name"]
 		if type(stargate_network[temp])=="table" and temp~=player_name then
 			for __,gates in ipairs(stargate_network[temp]) do
-				if gates["type"]=="public" then 
+				if gates["type"]=="public" then
 					public_gates_count=public_gates_count+1
 					table.insert(stargate_network["players"][player_name]["public_gates"],gates)
 					end
@@ -154,7 +154,7 @@ stargate.gateFormspecHandler = function(pos, node, clicker, itemstack)
 		end
 
 	print(dump(stargate_network["players"][player_name]["public_gates"]))
-	if current_gate==nil then 
+	if current_gate==nil then
 		print ("Gate not registered in network! Please remove it and place once again.")
 		return nil
 	end
@@ -165,7 +165,7 @@ stargate.gateFormspecHandler = function(pos, node, clicker, itemstack)
 	stargate_network["players"][player_name]["temp_gate"]["pos"].x=current_gate["pos"].x
 	stargate_network["players"][player_name]["temp_gate"]["pos"].y=current_gate["pos"].y
 	stargate_network["players"][player_name]["temp_gate"]["pos"].z=current_gate["pos"].z
-	if current_gate["destination"] then 
+	if current_gate["destination"] then
 		stargate_network["players"][player_name]["temp_gate"]["destination_description"]=current_gate["destination_description"]
 		stargate_network["players"][player_name]["temp_gate"]["destination_dir"]=current_gate["destination_dir"]
 		stargate_network["players"][player_name]["temp_gate"]["destination"]={}
@@ -196,7 +196,7 @@ stargate.get_formspec = function(player_name,page)
 	formspec = formspec.."label[4,.5;Type: "..temp_gate["type"].."]"
 	formspec = formspec.."image_button[6.5,.6;.6,.6;pencil_icon.png;edit_desc;]"
 	formspec = formspec.."label[0,1.1;Destination: ]"
-	if temp_gate["destination"] then 
+	if temp_gate["destination"] then
 		formspec = formspec.."label[2.5,1.1;("..temp_gate["destination"].x..","
 											  ..temp_gate["destination"].y..","
 											  ..temp_gate["destination"].z..") "
@@ -217,11 +217,11 @@ stargate.get_formspec = function(player_name,page)
 	formspec = formspec.."image_button[6.5,.6;.6,.6;ok_icon.png;save_desc;]"
 	formspec = formspec.."field[7.3,.7;5,1;desc_box;Edit gate description:;"..temp_gate["description"].."]"
 	end
-	
+
 	local list_index=stargate_network["players"][player_name]["current_index"]
 	local page=math.floor(list_index / 24 + 1)
 	local pagemax
-	if stargate_network["players"][player_name]["dest_type"] == "own" then 
+	if stargate_network["players"][player_name]["dest_type"] == "own" then
 		pagemax = math.floor((stargate_network["players"][player_name]["own_gates_count"] / 24) + 1)
 		local x,y
 		for y=0,7,1 do
@@ -267,7 +267,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	local formspec
 
 	if fields.toggle_type then
-		if temp_gate["type"] == "private" then 
+		if temp_gate["type"] == "private" then
 			temp_gate["type"] = "public"
 		else temp_gate["type"] = "private" end
 		stargate_network["players"][player_name]["current_index"]=0
@@ -278,7 +278,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		return
 	end
 	if fields.toggle_dest_type then
-		if stargate_network["players"][player_name]["dest_type"] == "own" then 
+		if stargate_network["players"][player_name]["dest_type"] == "own" then
 			stargate_network["players"][player_name]["dest_type"] = "all public"
 		else stargate_network["players"][player_name]["dest_type"] = "own" end
 		stargate_network["players"][player_name]["current_index"] = 0
@@ -304,12 +304,12 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		minetest.sound_play("click", {to_player=player_name, gain = 0.5})
 		return
 	end
-	
+
 	-- page controls
 	local start=math.floor(stargate_network["players"][player_name]["current_index"]/24 +1 )
 	local start_i=start
 	local pagemax = math.floor(((stargate_network["players"][player_name]["own_gates_count"]-1) / 24) + 1)
-	
+
 	if fields.page_left then
 		minetest.sound_play("paperflip2", {to_player=player_name, gain = 1.0})
 		start_i = start_i - 1
@@ -323,7 +323,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	end
 	if fields.page_right then
 		minetest.sound_play("paperflip2", {to_player=player_name, gain = 1.0})
-		start_i = start_i + 1 
+		start_i = start_i + 1
 		if start_i > pagemax then start_i =  pagemax end
 		if not (start_i	== start) then
 			stargate_network["players"][player_name]["current_index"] = (start_i-1)*24
@@ -344,7 +344,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 
 	if fields.save_changes then
 		minetest.sound_play("click", {to_player=player_name, gain = 0.5})
-		local meta = minetest.env:get_meta(temp_gate["pos"])
+		local meta = minetest.get_meta(temp_gate["pos"])
 		local infotext=""
 		current_gate["type"]=temp_gate["type"]
 		current_gate["description"]=temp_gate["description"]
@@ -353,7 +353,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		current_gate["pos"].y=temp_gate["pos"].y
 		current_gate["pos"].z=temp_gate["pos"].z
 		current_gate["dest"]=temp_gate["dest"]
-		if temp_gate["destination"] then 
+		if temp_gate["destination"] then
 			current_gate["destination"]={}
 			current_gate["destination"].x=temp_gate["destination"].x
 			current_gate["destination"].y=temp_gate["destination"].y
@@ -363,15 +363,16 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		else
 			current_gate["destination"]=nil
 		end
-		if current_gate["destination"] then 
-			activateGate (current_gate["pos"])
+		if current_gate["destination"] then
+			stargate.activateGate (current_gate.pos)
+			--stargate.activateGate (current_gate.destination)
 		else
-			deactivateGate (current_gate["pos"])
+			stargate.deactivateGate (current_gate["pos"])
 		end
 		if current_gate["type"]=="private" then infotext="Private"	else infotext="Public" end
 		infotext=infotext.." Gate: "..current_gate["description"].."\n"
 		infotext=infotext.."Owned by "..player_name.."\n"
-		if current_gate["destination"] then 
+		if current_gate["destination"] then
 			infotext=infotext.."Destination: ("..current_gate["destination"].x..","..current_gate["destination"].y..","..current_gate["destination"].z..") "
 			infotext=infotext..current_gate["destination_description"]
 		end
@@ -389,7 +390,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	local i
 	for i=0,23,1 do
 	local button="list_button"..i+list_index
-	if fields[button] then 
+	if fields[button] then
 		minetest.sound_play("click", {to_player=player_name, gain = 1.0})
 		local gate=stargate_network["players"][player_name]["temp_gate"]
 		local dest_gate
