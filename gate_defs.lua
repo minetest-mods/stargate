@@ -145,7 +145,6 @@ function removeGate (pos)
 	local player_name=meta:get_string("owner")
 	local gateNodes=minetest.deserialize(meta:get_string("gateNodes"))
 	if gateNodes ~= nil then
-		core.remove_node(gateNodes[1].pos)
 		stargate.unregisterGate(player_name,gateNodes[1].pos)
 	end
 end
