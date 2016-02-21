@@ -153,7 +153,7 @@ stargate.gateFormspecHandler = function(pos, node, clicker, itemstack)
 			end
 		end
 
-	print(dump(stargate_network["players"][player_name]["public_gates"]))
+	-- print(dump(stargate_network["players"][player_name]["public_gates"]))
 	if current_gate==nil then 
 		print ("Gate not registered in network! Please remove it and place once again.")
 		return nil
