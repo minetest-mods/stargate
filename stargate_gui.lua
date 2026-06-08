@@ -10,8 +10,8 @@ end
 
 stargate.save_data = function(table_pointer)
 	if table_empty(stargate_network[table_pointer]) then return end
-	local data = minetest.serialize( stargate_network[table_pointer] )
-	local path = minetest.get_worldpath().."/stargate_"..table_pointer..".data"
+	local data = core.serialize( stargate_network[table_pointer] )
+	local path = core.get_worldpath().."/stargate_"..table_pointer..".data"
 	local file = io.open( path, "w" )
 	if( file ) then
 		file:write( data )
@@ -22,11 +22,11 @@ stargate.save_data = function(table_pointer)
 end
 
 stargate.restore_data = function(table_pointer)
-	local path = minetest.get_worldpath().."/stargate_"..table_pointer..".data"
+	local path = core.get_worldpath().."/stargate_"..table_pointer..".data"
 	local file = io.open( path, "r" )
 	if( file ) then
 		local data = file:read("*all")
-		stargate_network[table_pointer] = minetest.deserialize( data )
+		stargate_network[table_pointer] = core.deserialize( data )
 		file:close()
 		if table_empty(stargate_network[table_pointer]) then os.remove(path) end
 	return true
@@ -49,7 +49,7 @@ else
 end
 
 -- register_on_joinplayer
-minetest.register_on_joinplayer(function(player)
+core.register_on_joinplayer(function(player)
 	local player_name = player:get_player_name()
 	local registered=nil
 	for __,tab in ipairs(stargate_network["registered_players"]) do
@@ -121,7 +121,7 @@ end
 --show formspec to player
 stargate.gateFormspecHandler = function(pos, node, clicker, itemstack)
 	local player_name = clicker:get_player_name()
-	local meta = minetest.get_meta(pos)
+	local meta = core.get_meta(pos)
 	local owner=meta:get_string("owner")
 	if player_name~=owner then return end
 	local current_gate=nil
@@ -179,7 +179,7 @@ stargate.gateFormspecHandler = function(pos, node, clicker, itemstack)
 	stargate_network["players"][player_name]["dest_type"]="own"
 	local formspec=stargate.get_formspec(player_name,"main")
 	stargate_network["players"][player_name]["formspec"]=formspec
-	if formspec ~=nil then minetest.show_formspec(player_name, "stargate_main", formspec) end
+	if formspec ~=nil then core.show_formspec(player_name, "stargate_main", formspec) end
 end
 
 -- get_formspec
@@ -259,7 +259,7 @@ stargate.get_formspec = function(player_name,page)
 end
 
 -- register_on_player_receive_fields
-minetest.register_on_player_receive_fields(function(player, formname, fields)
+core.register_on_player_receive_fields(function(player, formname, fields)
 	if not formname == "stargate_main" then return "" end
 	local player_name = player:get_player_name()
 	local temp_gate=stargate_network["players"][player_name]["temp_gate"]
@@ -273,8 +273,8 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		stargate_network["players"][player_name]["current_index"]=0
 		formspec= stargate.get_formspec(player_name,"main")
 		stargate_network["players"][player_name]["formspec"] = formspec
-		minetest.show_formspec(player_name, "stargate_main", formspec)
-		minetest.sound_play("click", {to_player=player_name, gain = 0.5})
+		core.show_formspec(player_name, "stargate_main", formspec)
+		core.sound_play("click", {to_player=player_name, gain = 0.5})
 		return
 	end
 	if fields.toggle_dest_type then
@@ -284,15 +284,15 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		stargate_network["players"][player_name]["current_index"] = 0
 		formspec = stargate.get_formspec(player_name,"main")
 		stargate_network["players"][player_name]["formspec"] = formspec
-		minetest.show_formspec(player_name, "stargate_main", formspec)
-		minetest.sound_play("click", {to_player=player_name, gain = 0.5})
+		core.show_formspec(player_name, "stargate_main", formspec)
+		core.sound_play("click", {to_player=player_name, gain = 0.5})
 		return
 	end
 	if fields.edit_desc then
 		formspec= stargate.get_formspec(player_name,"edit_desc")
 		stargate_network["players"][player_name]["formspec"]=formspec
-		minetest.show_formspec(player_name, "stargate_main", formspec)
-		minetest.sound_play("click", {to_player=player_name, gain = 0.5})
+		core.show_formspec(player_name, "stargate_main", formspec)
+		core.sound_play("click", {to_player=player_name, gain = 0.5})
 		return
 	end
 
@@ -300,8 +300,8 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		temp_gate["description"]=fields.desc_box
 		formspec= stargate.get_formspec(player_name,"main")
 		stargate_network["players"][player_name]["formspec"]=formspec
-		minetest.show_formspec(player_name, "stargate_main", formspec)
-		minetest.sound_play("click", {to_player=player_name, gain = 0.5})
+		core.show_formspec(player_name, "stargate_main", formspec)
+		core.sound_play("click", {to_player=player_name, gain = 0.5})
 		return
 	end
 
@@ -311,40 +311,40 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	local pagemax = math.floor(((stargate_network["players"][player_name]["own_gates_count"]-1) / 24) + 1)
 
 	if fields.page_left then
-		minetest.sound_play("paperflip2", {to_player=player_name, gain = 1.0})
+		core.sound_play("paperflip2", {to_player=player_name, gain = 1.0})
 		start_i = start_i - 1
 		if start_i < 1 then	start_i = 1	end
 		if not (start_i	== start) then
 			stargate_network["players"][player_name]["current_index"] = (start_i-1)*24
 			formspec = stargate.get_formspec(player_name,"main")
 			stargate_network["players"][player_name]["formspec"] = formspec
-			minetest.show_formspec(player_name, "stargate_main", formspec)
+			core.show_formspec(player_name, "stargate_main", formspec)
 		end
 	end
 	if fields.page_right then
-		minetest.sound_play("paperflip2", {to_player=player_name, gain = 1.0})
+		core.sound_play("paperflip2", {to_player=player_name, gain = 1.0})
 		start_i = start_i + 1
 		if start_i > pagemax then start_i =  pagemax end
 		if not (start_i	== start) then
 			stargate_network["players"][player_name]["current_index"] = (start_i-1)*24
 			formspec = stargate.get_formspec(player_name,"main")
 			stargate_network["players"][player_name]["formspec"] = formspec
-			minetest.show_formspec(player_name, "stargate_main", formspec)
+			core.show_formspec(player_name, "stargate_main", formspec)
 		end
 	end
 
 	if fields.remove_dest then
-		minetest.sound_play("click", {to_player=player_name, gain = 0.5})
+		core.sound_play("click", {to_player=player_name, gain = 0.5})
 		temp_gate["destination"]=nil
 		temp_gate["destination_description"]=nil
 		formspec = stargate.get_formspec(player_name,"main")
 		stargate_network["players"][player_name]["formspec"] = formspec
-		minetest.show_formspec(player_name, "stargate_main", formspec)
+		core.show_formspec(player_name, "stargate_main", formspec)
 	end
 
 	if fields.save_changes then
-		minetest.sound_play("click", {to_player=player_name, gain = 0.5})
-		local meta = minetest.get_meta(temp_gate["pos"])
+		core.sound_play("click", {to_player=player_name, gain = 0.5})
+		local meta = core.get_meta(temp_gate["pos"])
 		local infotext=""
 		current_gate["type"]=temp_gate["type"]
 		current_gate["description"]=temp_gate["description"]
@@ -383,7 +383,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	end
 
 	if fields.discard_changes then
-		minetest.sound_play("click", {to_player=player_name, gain = 0.5})
+		core.sound_play("click", {to_player=player_name, gain = 0.5})
 	end
 
 	local list_index=stargate_network["players"][player_name]["current_index"]
@@ -391,7 +391,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 	for i=0,23,1 do
 	local button="list_button"..i+list_index
 	if fields[button] then
-		minetest.sound_play("click", {to_player=player_name, gain = 1.0})
+		core.sound_play("click", {to_player=player_name, gain = 1.0})
 		local gate=stargate_network["players"][player_name]["temp_gate"]
 		local dest_gate
 		if stargate_network["players"][player_name]["dest_type"] == "own" then
@@ -407,7 +407,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		gate["destination_dir"]=dest_gate["dir"]
 		formspec = stargate.get_formspec(player_name,"main")
 		stargate_network["players"][player_name]["formspec"] = formspec
-		minetest.show_formspec(player_name, "stargate_main", formspec)
+		core.show_formspec(player_name, "stargate_main", formspec)
 	end
 	end
 end)
