@@ -13,7 +13,7 @@ local function addGateNode(gateNodes, pos)
 end
 
 local function placeGate(player,pos)
-	local dir = minetest.dir_to_facedir(player:get_look_dir())
+	local dir = core.dir_to_facedir(player:get_look_dir())
 	local pos1 = vector.new(pos)
 	local gateNodes = {}
 	addGateNode(gateNodes, pos1)
@@ -89,7 +89,7 @@ function stargate.activateGate(pos)
 	local meta = core.get_meta(pos)
 	meta:set_int("gateActive",1)
 	meta:set_string("dont_destroy","true")
-	minetest.sound_play("gateOpen", {pos = pos, max_hear_distance = 72,})
+	core.sound_play("gateOpen", {pos = pos, max_hear_distance = 72,})
 	swap_gate_node(pos,"stargate:gatenode_on",dir)
 	meta:set_string("dont_destroy","false")
 end
@@ -100,7 +100,7 @@ function stargate.deactivateGate(pos)
 	local meta = core.get_meta(pos)
 	meta:set_int("gateActive",0)
 	meta:set_string("dont_destroy","true")
-	minetest.sound_play("gateClose", {pos = pos, gain = 1.0,loop = false, max_hear_distance = 72,})
+	core.sound_play("gateClose", {pos = pos, gain = 1.0,loop = false, max_hear_distance = 72,})
 	swap_gate_node(pos,"stargate:gatenode_off",dir)
 	meta:set_string("dont_destroy","false")
 end
@@ -124,7 +124,7 @@ local sg_selection_box = {
 local sg_groups = {snappy=2,choppy=2,oddly_breakable_by_hand=2,not_in_creative_inventory=1}
 local sg_groups1 = {snappy=2,choppy=2,oddly_breakable_by_hand=2}
 
-minetest.register_node("stargate:gatenode_on",{
+core.register_node("stargate:gatenode_on",{
 	tiles = {
 		{name = "gray.png"},
 		{
@@ -156,7 +156,7 @@ minetest.register_node("stargate:gatenode_on",{
 	on_rightclick=stargate.gateFormspecHandler,
 })
 
-minetest.register_node("stargate:gatenode_off",{
+core.register_node("stargate:gatenode_off",{
 	description = "Stargate",
 	inventory_image = "stargate.png",
 	wield_image = "stargate.png",
@@ -190,7 +190,7 @@ minetest.register_node("stargate:gatenode_off",{
 	on_rightclick=stargate.gateFormspecHandler,
 })
 
-minetest.register_abm({
+core.register_abm({
 	nodenames = {"stargate:gatenode_on"},
 	interval = 1,
 	chance = 1,
